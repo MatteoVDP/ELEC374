@@ -1,11 +1,13 @@
 ﻿
+//written by Matteo Van der Plaat (20287556)
+
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 
-#define MATRIX_WIDTH 1000 //dimensions of matrices
+#define MATRIX_WIDTH 250 //dimensions of matrices
 #define MATRIX_SIZE (MATRIX_WIDTH * MATRIX_WIDTH) //total number of elements in matrices
 #define NBYTES (MATRIX_SIZE * sizeof(float))
 
@@ -59,7 +61,7 @@ void checkGPUanswer(float* M, float* N, float* GPU_P, int WIDTH)
 		}
 	}
 	passed = 1; //if all values match up, test passed
-	
+
 	if (passed)	printf("TEST PASSED\n");
 	else		printf("TEST FAILED\n");
 }
@@ -111,16 +113,16 @@ int main()
 
 	for (int i = 0; i < MATRIX_SIZE; i++)
 	{	// fill matrices M and N with randon values for testing
-		M[i] = rand() % 100 / (float) 10.0;
-		N[i] = rand() % 100 / (float) 10.0;
+		M[i] = rand() % 100 / (float)10.0;
+		N[i] = rand() % 100 / (float)10.0;
 		P[i] = 0.0;
 	}
 
 	//function used for testing transferring data between host and device
-	//cudaTransferTest();
-	
+	cudaTransferTest();
+
 	//functions used for testing matrix multiplication using GPUs and comparing against CPUs
-	cudaMatMult(M, N, P, MATRIX_WIDTH); // GPU/Cuda matrix multiplication
+	//cudaMatMult(M, N, P, MATRIX_WIDTH); // GPU/Cuda matrix multiplication
 	//CPUmatMult(M, N, P, MATRIX_WIDTH); // CPU matrix multiplication
 
 	//free host memory 
@@ -153,7 +155,7 @@ void cudaTransferTest()
 		printf("Error allocating memory in device");
 
 	//repeat 5 times to ensure correctness
-	for(int i = 0; i < 5; i++)
+	for (int i = 0; i < 5; i++)
 	{
 		cudaEventRecord(start, 0); // start timer
 		cudaDeviceSynchronize();
@@ -209,27 +211,30 @@ void cudaMatMult(float* M, float* N, float* P, int WIDTH)
 	if (err != cudaSuccess)
 		printf("Error allocating memory in device");
 
-	//copy memory from host to device
-	cudaMemcpy(dM, M, MATRIX_SIZE * sizeof(float), cudaMemcpyHostToDevice);
-	cudaMemcpy(dN, N, MATRIX_SIZE * sizeof(float), cudaMemcpyHostToDevice);
-
 	//testing for part 3, cycling through block widths of 2, 5, 10, 25, 32
-	for(int i = 0; i < 5; i++)
+	for (int i = 0; i < 5; i++)
 	{
-		int NUM_BLOCKS = WIDTH / BLOCK_WIDTH[i];
-		if (WIDTH % BLOCK_WIDTH[i]) NUM_BLOCKS++;
+	int NUM_BLOCKS = WIDTH / BLOCK_WIDTH[i];
+	if (WIDTH % BLOCK_WIDTH[i]) NUM_BLOCKS++;
 
-		//define dimensions of grid and blocks
-		dim3 dimGrid(NUM_BLOCKS, NUM_BLOCKS);
-		dim3 dimBlock(BLOCK_WIDTH[i], BLOCK_WIDTH[i]);
+	//define dimensions of grid and blocks
+	dim3 dimGrid(NUM_BLOCKS, NUM_BLOCKS);
+	dim3 dimBlock(BLOCK_WIDTH[i], BLOCK_WIDTH[i]);
 
 		for (int i = 0; i < 5; i++)
 		{
 			cudaEventRecord(start, 0); // start timer
 			cudaDeviceSynchronize();
 
+			//copy memory from host to device
+			cudaMemcpy(dM, M, MATRIX_SIZE * sizeof(float), cudaMemcpyHostToDevice);
+			cudaMemcpy(dN, N, MATRIX_SIZE * sizeof(float), cudaMemcpyHostToDevice);
+
 			//calculate matrix multiplication using Cuda and GPUs,, enabling synchronization
-			matMultKernel <<<dimGrid, dimBlock >>> (dM, dN, dP, WIDTH);
+			matMultKernel << <dimGrid, dimBlock >> > (dM, dN, dP, WIDTH);
+
+			cudaMemcpy(M, dM, MATRIX_SIZE * sizeof(float), cudaMemcpyDeviceToHost);
+			cudaMemcpy(N, dN, MATRIX_SIZE * sizeof(float), cudaMemcpyDeviceToHost);
 
 			cudaEventRecord(stop, 0); // end timer
 			cudaEventSynchronize(stop);
