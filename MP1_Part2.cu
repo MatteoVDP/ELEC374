@@ -38,11 +38,13 @@ __global__ void matMultKernel(float* M, float* N, float* P, int WIDTH)
 	}
 }
 
+//function used to check validity of value outputted by GPU Mat Mult function
 void checkGPUanswer(float* M, float* N, float* GPU_P, int WIDTH)
 {
 	bool passed;
 	float check;
 
+	//calculate correct values in CPU and compare against GPU value
 	for (int i = 0; i < WIDTH; i++)
 	{
 		for (int j = 0; j < WIDTH; j++)
@@ -56,8 +58,8 @@ void checkGPUanswer(float* M, float* N, float* GPU_P, int WIDTH)
 			}
 		}
 	}
-	passed = 1;
-
+	passed = 1; //if all values match up, test passed
+	
 	if (passed)	printf("TEST PASSED\n");
 	else		printf("TEST FAILED\n");
 }
@@ -65,6 +67,7 @@ void checkGPUanswer(float* M, float* N, float* GPU_P, int WIDTH)
 //standard matrix multiplication, computed using CPU
 void CPUmatMult(float* M, float* N, float* P, int WIDTH)
 {
+	//initialization values used for timing
 	cudaEvent_t start, stop;
 	float gpu_time = 0;
 	cudaEventCreate(&start);
@@ -99,27 +102,28 @@ void CPUmatMult(float* M, float* N, float* P, int WIDTH)
 
 int main()
 {
-	srand(time(NULL));
+	srand(time(NULL)); //seed random function
 
+	//allocate memory in host
 	cudaMallocHost((void**)&M, NBYTES);
 	cudaMallocHost((void**)&N, NBYTES);
 	cudaMallocHost((void**)&P, NBYTES);
 
 	for (int i = 0; i < MATRIX_SIZE; i++)
-	{	// value between 0 and 10, one decimal place
+	{	// fill matrices M and N with randon values for testing
 		M[i] = rand() % 100 / (float) 10.0;
 		N[i] = rand() % 100 / (float) 10.0;
 		P[i] = 0.0;
 	}
 
+	//function used for testing transferring data between host and device
 	//cudaTransferTest();
+	
+	//functions used for testing matrix multiplication using GPUs and comparing against CPUs
+	cudaMatMult(M, N, P, MATRIX_WIDTH); // GPU/Cuda matrix multiplication
+	//CPUmatMult(M, N, P, MATRIX_WIDTH); // CPU matrix multiplication
 
-	//for(int i = 0; i < 5; i++)
-	//{
-		cudaMatMult(M, N, P, MATRIX_WIDTH);
-	//	CPUmatMult(M, N, P, MATRIX_WIDTH);
-	//}
-
+	//free host memory 
 	cudaFreeHost(M);
 	cudaFreeHost(N);
 	cudaFreeHost(P);
@@ -148,6 +152,7 @@ void cudaTransferTest()
 	if (err != cudaSuccess)
 		printf("Error allocating memory in device");
 
+	//repeat 5 times to ensure correctness
 	for(int i = 0; i < 5; i++)
 	{
 		cudaEventRecord(start, 0); // start timer
@@ -157,7 +162,7 @@ void cudaTransferTest()
 		cudaMemcpy(dM, M, MATRIX_SIZE * sizeof(float), cudaMemcpyHostToDevice);
 		cudaMemcpy(dN, N, MATRIX_SIZE * sizeof(float), cudaMemcpyHostToDevice);
 
-		cudaEventRecord(stop, 0);	// end timer
+		cudaEventRecord(stop, 0); // end timer
 		cudaEventSynchronize(stop);
 		cudaEventElapsedTime(&gpu_time, start, stop);
 		printf("Time to send matrices to device from host: %f\n", gpu_time); //display results
@@ -176,7 +181,7 @@ void cudaTransferTest()
 
 
 	}
-
+	//free device memory
 	cudaFree(dM);
 	cudaFree(dN);
 	cudaFree(dP);
@@ -204,15 +209,17 @@ void cudaMatMult(float* M, float* N, float* P, int WIDTH)
 	if (err != cudaSuccess)
 		printf("Error allocating memory in device");
 
+	//copy memory from host to device
 	cudaMemcpy(dM, M, MATRIX_SIZE * sizeof(float), cudaMemcpyHostToDevice);
 	cudaMemcpy(dN, N, MATRIX_SIZE * sizeof(float), cudaMemcpyHostToDevice);
 
+	//testing for part 3, cycling through block widths of 2, 5, 10, 25, 32
 	for(int i = 0; i < 5; i++)
 	{
-
 		int NUM_BLOCKS = WIDTH / BLOCK_WIDTH[i];
 		if (WIDTH % BLOCK_WIDTH[i]) NUM_BLOCKS++;
 
+		//define dimensions of grid and blocks
 		dim3 dimGrid(NUM_BLOCKS, NUM_BLOCKS);
 		dim3 dimBlock(BLOCK_WIDTH[i], BLOCK_WIDTH[i]);
 
@@ -221,18 +228,19 @@ void cudaMatMult(float* M, float* N, float* P, int WIDTH)
 			cudaEventRecord(start, 0); // start timer
 			cudaDeviceSynchronize();
 
-			//copy information from device to host
+			//calculate matrix multiplication using Cuda and GPUs,, enabling synchronization
 			matMultKernel <<<dimGrid, dimBlock >>> (dM, dN, dP, WIDTH);
 
-			cudaEventRecord(stop, 0);	// end timer
+			cudaEventRecord(stop, 0); // end timer
 			cudaEventSynchronize(stop);
 			cudaEventElapsedTime(&gpu_time, start, stop);
 			printf("Time for GPU matrix multiplication: %f\n", gpu_time); //display results
-			checkGPUanswer(M, N, P, MATRIX_WIDTH);
+			checkGPUanswer(M, N, P, MATRIX_WIDTH); //make sure answers are correct by comparing against CPU values
 
 		}
 	}
 
+	//free device memory
 	cudaFree(dM);
 	cudaFree(dN);
 	cudaFree(dP);
