@@ -14,7 +14,7 @@
 //int BLOCK_WIDTH = 1;
 int BLOCK_WIDTH[] = { 2, 5, 10, 25, 32 };
 int TILE_SIZE[] = { 2, 5, 10, 25 };
-#define TILE_WIDTH 25
+#define TILE_WIDTH 25 //tile width used in tiledmatrix multiplication
 
 float M[MATRIX_SIZE];
 float N[MATRIX_SIZE];
@@ -229,19 +229,11 @@ void cudaMatMult(float* M, float* N, float* P, int WIDTH)
 	if (err != cudaSuccess)
 		printf("Error allocating memory in device");
 
-	//int NUM_TILES = WIDTH / TILE_WIDTH[i];
-	//if (WIDTH % TILE_WIDTH[i]) NUM_TILES++;
-
 	//define dimensions of grid and blocks
 	dim3 dimGrid(WIDTH / TILE_WIDTH, WIDTH / TILE_WIDTH);
 	dim3 dimBlock(TILE_WIDTH, TILE_WIDTH);
-		 
-	//dim3 dimGrid(NUM_BLOCKS, NUM_BLOCKS);
-	//dim3 dimBlock(BLOCK_WIDTH[i], BLOCK_WIDTH[i]);
 
-
-
-	for (int j = 0; j < 5; j++)
+	for (int j = 0; j < 5; j++) //repeat trials 5 times to ensure accuracy
 	{
 
 		//copy memory from host to device
@@ -257,7 +249,7 @@ void cudaMatMult(float* M, float* N, float* P, int WIDTH)
 		cudaEventRecord(stop, 0); // end timer
 		cudaEventSynchronize(stop);
 		cudaEventElapsedTime(&gpu_time, start, stop);
-		printf("Time for GPU matrix multiplication: %f\n", gpu_time); //display results
+		printf("Time for tiled GPU matrix multiplication: %f\n", gpu_time); //display results
 
 		cudaMemcpy(M, dM, MATRIX_SIZE * sizeof(float), cudaMemcpyDeviceToHost);
 		cudaMemcpy(N, dN, MATRIX_SIZE * sizeof(float), cudaMemcpyDeviceToHost);
