@@ -140,8 +140,30 @@ int main()
 	//cudaTransferTest();
 
 	//functions used for testing matrix multiplication using GPUs and comparing against CPUs
-	cudaMatMult(M, N, P, MATRIX_WIDTH); // GPU/Cuda matrix multiplication
+	//cudaMatMult(M, N, P, MATRIX_WIDTH); // GPU/Cuda matrix multiplication
 	//CPUmatMult(M, N, P, MATRIX_WIDTH); // CPU matrix multiplication
+
+	cudaDeviceProp dev_prop;
+	int dev_count;
+	cudaGetDeviceCount(&dev_count);
+
+	for (int i = 0; i < dev_count; i++) {
+		cudaGetDeviceProperties(&dev_prop, i);
+		printf("mp count: %d\n", dev_prop.multiProcessorCount);
+		printf("name: %s\n", dev_prop.name);
+		printf("blocks per smp: %d\n", dev_prop.maxBlocksPerMultiProcessor);
+		printf("max threads per block: %d\n", dev_prop.maxThreadsPerBlock);
+		printf("shared mem per MP: %d\n", dev_prop.sharedMemPerMultiprocessor);
+		printf("max threads dimension 0: %d\n", dev_prop.maxThreadsDim[0]);
+		printf("max threads dimension 1: %d\n", dev_prop.maxThreadsDim[1]);
+		printf("max threads dimension 2: %d\n", dev_prop.maxThreadsDim[2]);
+		printf("max grid size dimension 0: %d\n", dev_prop.maxGridSize[0]);
+		printf("max grid size dimension 1: %d\n", dev_prop.maxGridSize[1]);
+		printf("max grid size dimension 2: %d\n", dev_prop.maxGridSize[2]);
+		printf("regs per block: %d\n", dev_prop.regsPerBlock);
+		printf("shared mem per block: %lu\n", dev_prop.sharedMemPerBlock);
+
+	}
 
 	//free host memory 
 	cudaFreeHost(M);
