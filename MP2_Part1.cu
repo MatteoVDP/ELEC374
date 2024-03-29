@@ -140,10 +140,10 @@ int main()
 	//cudaTransferTest();
 
 	//functions used for testing matrix multiplication using GPUs and comparing against CPUs
-	//cudaMatMult(M, N, P, MATRIX_WIDTH); // GPU/Cuda matrix multiplication
+	cudaMatMult(M, N, P, MATRIX_WIDTH); // GPU/Cuda matrix multiplication
 	//CPUmatMult(M, N, P, MATRIX_WIDTH); // CPU matrix multiplication
 
-	cudaDeviceProp dev_prop;
+	/*cudaDeviceProp dev_prop;
 	int dev_count;
 	cudaGetDeviceCount(&dev_count);
 
@@ -163,7 +163,7 @@ int main()
 		printf("regs per block: %d\n", dev_prop.regsPerBlock);
 		printf("shared mem per block: %lu\n", dev_prop.sharedMemPerBlock);
 
-	}
+	}*/
 
 	//free host memory 
 	cudaFreeHost(M);
