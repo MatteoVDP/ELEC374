@@ -276,7 +276,7 @@ void cudaMatMult(float* M, float* N, float* P, int WIDTH)
 		cudaMemcpy(M, dM, MATRIX_SIZE * sizeof(float), cudaMemcpyDeviceToHost);
 		cudaMemcpy(N, dN, MATRIX_SIZE * sizeof(float), cudaMemcpyDeviceToHost);
 
-		//checkGPUanswer(M, N, P, MATRIX_WIDTH); //make sure answers are correct by comparing against CPU values
+		checkGPUanswer(M, N, P, MATRIX_WIDTH); //make sure answers are correct by comparing against CPU values
 
 	}
 
